@@ -1,6 +1,9 @@
 name: Build and Release with PyInstaller
 
-on: [push]
+on:
+  push:
+    paths-ignore:
+      - '*.md'
 
 jobs:
   build-and-release:
@@ -29,9 +32,6 @@ jobs:
       - name: Build with PyInstaller
         run: pyinstaller -F main.py
 
-      - name: rename main to main.exe
-        run: mv dist/main dist/main.exe
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -49,8 +49,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/main.exe
-          asset_name: main.exe
+          asset_path: ./dist/main
+          asset_name: main
           asset_content_type: application/octet-stream
 
       - name: Upload README as Release Asset
