@@ -26,9 +26,11 @@ jobs:
       - name: Install PyInstaller
         run: pip install pyinstaller
 
-
       - name: Build with PyInstaller
         run: pyinstaller -F main.py
+
+      - name: rename main to main.exe
+        run: mv dist/main main.exe
 
       - name: Create Release
         id: create_release
