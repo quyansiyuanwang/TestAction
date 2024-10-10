@@ -15,7 +15,7 @@ jobs:
         id: vars
         run: |
           echo "::set-output name=tag::$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
-          echo "::set-output name=release_name::Release $(date +'%Y%m%d' + ' - ' + git rev-parse --short HEAD)"
+          echo "::set-output name=release_name::Release $(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
 
       - name: Set up Python
         uses: actions/setup-python@v2
