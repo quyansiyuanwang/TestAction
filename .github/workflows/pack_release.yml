@@ -30,7 +30,7 @@ jobs:
         run: pyinstaller -F main.py
 
       - name: rename main to main.exe
-        run: mv dist/main main.exe
+        run: mv dist/main dist/main.exe
 
       - name: Create Release
         id: create_release
