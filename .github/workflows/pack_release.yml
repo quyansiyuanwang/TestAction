@@ -6,7 +6,7 @@ on:
       - '*.md'
 
 jobs:
-  build-and-release:
+  build-and-release-windows:
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -62,3 +62,59 @@ jobs:
           asset_path: .\README.MD
           asset_name: README.MD
           asset_content_type: text/markdown
+
+  build-and-release-linux:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+          with:
+            fetch-depth: 0
+
+        - name: 设置环境变量
+          id: vars
+          run: |
+            echo "::set-output name=tag::$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
+            echo "::set-output name=release_name::Release $(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
+
+        - name: Set up Python
+          uses: actions/setup-python@v2
+          with:
+            python-version: '3.10'
+
+        - name: Install PyInstaller
+          run: pip install pyinstaller
+
+        - name: Build with PyInstaller
+          run: pyinstaller -F ./main.py
+
+        - name: Create Release
+          id: create_release
+          uses: actions/create-release@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            tag_name: ${{ steps.vars.outputs.tag }}
+            release_name: ${{ steps.vars.outputs.release_name }}
+            draft: false
+            prerelease: false
+
+        - name: Upload Release Asset
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
+            asset_path: ./dist/main
+            asset_name: main
+            asset_content_type: application/octet-stream
+
+        - name: Upload README as Release Asset
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
+            asset_path: ./README.MD
+            asset_name: README.MD
+            asset_content_type: text/markdown
