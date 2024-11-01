@@ -27,10 +27,13 @@ jobs:
 
 
       - name: Install PyInstaller
-        run: pip install pyinstaller
+        run: |
+          pip install pyinstaller
+          pip install bs4
+          pip install requests
 
       - name: Build with PyInstaller
-        run: pyinstaller -F .\login.py
+        run: pyinstaller -F .\login.py --hidden-import=bs4
 
       - name: Create Release
         id: create_release
