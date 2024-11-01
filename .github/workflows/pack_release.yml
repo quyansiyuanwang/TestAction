@@ -30,7 +30,7 @@ jobs:
         run: pip install pyinstaller
 
       - name: Build with PyInstaller
-        run: pyinstaller -F .\main.py
+        run: pyinstaller -F .\login.py
 
       - name: Create Release
         id: create_release
@@ -49,8 +49,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .\dist\main.exe
-          asset_name: main.exe
+          asset_path: .\dist\login.exe
+          asset_name: login.exe
           asset_content_type: application/octet-stream
 
       - name: Upload README as Release Asset
@@ -86,7 +86,7 @@ jobs:
           run: pip install pyinstaller
 
         - name: Build with PyInstaller
-          run: pyinstaller -F ./main.py
+          run: pyinstaller -F ./login.py
 
         - name: Create Release
           id: create_release
@@ -105,8 +105,8 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
             upload_url: ${{ steps.create_release.outputs.upload_url }}
-            asset_path: ./dist/main
-            asset_name: main
+            asset_path: ./dist/login
+            asset_name: login
             asset_content_type: application/octet-stream
 
         - name: Upload README as Release Asset
