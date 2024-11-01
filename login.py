@@ -98,8 +98,4 @@ def loop_login(usr, encrypted_pwd, user_agent=DEFAULT_UA, jessionid=DEFAULT_JESS
 
 
 if __name__ == '__main__':
-    # loop_login(
-    #     usr="244820810",
-    #     encrypted_pwd="78e804ad22be19b6e082eb8b55059ba87888ec1256997bea2ce9dc0a38365fb12c9fd5023a1b100e106f1585915fb8f0e8f1f2afb8cc452c184ded1f4d90ecfec2f37bb931c1a2da4d0ec9959680f107306b505780d2e99a038311fc90252d6482cdd44439731dee13749806c524e522d075846fc6b9fed4e2609606aa68688b"
-    # )
     loop_login(*(sys.argv[1:]))
