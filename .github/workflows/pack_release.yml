@@ -17,7 +17,7 @@ jobs:
       - name: 设置环境变量
         id: vars
         run: |
-          echo "::set-output name=tag::$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
+          echo "::set-output name=tag::Windows$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
           echo "::set-output name=release_name::WindowsRelease $(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
 
       - name: Set up Python
@@ -74,7 +74,7 @@ jobs:
         - name: 设置环境变量
           id: vars
           run: |
-            echo "::set-output name=tag::$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
+            echo "::set-output name=tag::Linux$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
             echo "::set-output name=release_name::LinuxRelease $(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
 
         - name: Set up Python
@@ -83,7 +83,9 @@ jobs:
             python-version: '3.10'
 
         - name: Install PyInstaller
-          run: pip install pyinstaller
+          run: |
+            pip install pyinstaller
+            
 
         - name: Build with PyInstaller
           run: pyinstaller -F ./login.py
