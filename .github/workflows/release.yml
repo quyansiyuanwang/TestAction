@@ -57,7 +57,7 @@ jobs:
         shell: cmd
         run: |
           echo Building project with Nuitka...
-          python -m nuitka --standalone --onefile --output-dir=dist main.py
+          echo Yes | python -m nuitka --standalone --onefile --output-dir=dist main.py
 
       - name: Create a new release
         shell: cmd
