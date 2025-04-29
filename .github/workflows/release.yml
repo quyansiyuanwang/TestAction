@@ -1,70 +1,126 @@
-name: Manual Version Trigger Workflow
+name: Build and Release with PyInstaller on Ubuntu
 
 on:
-  workflow_dispatch:
+  push:
+    paths-ignore:
+      - '*.md'
 
 jobs:
-  manual-trigger:
+  build-and-release-windows:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-      - name: Get the latest release
-        id: get_latest_release
-        shell: cmd
+      - name: 设置环境变量
+        id: vars
         run: |
-          echo Fetching latest release from the GitHub API...
-          for /f "tokens=1,2 delims=," %%A in ('curl -s "https://api.github.com/repos/%GITHUB_REPOSITORY%/releases/latest" ^| jq -r ".tag_name, .target_commitish"') do (
-            set "latest_release=%%A"
-            set "target_commit=%%B"
-          )
-          if "%latest_release%"=="" (
-            echo No previous release found. Defaulting to v1.0.0.
-            echo version=v1.0.0 >> %GITHUB_ENV%
-            echo last_commit= >> %GITHUB_ENV%
-          ) else (
-            echo Latest tag: %latest_release%
-            echo Last commit hash: %target_commit%
-            echo version=%latest_release% >> %GITHUB_ENV%
-            echo last_commit=%target_commit% >> %GITHUB_ENV%
-          )
+          echo "::set-output name=tag::Windows$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
+          echo "::set-output name=release_name::WindowsRelease $(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
 
-      - name: Increment version
-        id: increment_version
-        shell: cmd
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'
+
+
+      - name: Install PyInstaller
         run: |
-          echo Incrementing version...
-          set "latest_version=%version%"
-          for /f "tokens=1,2,3 delims=." %%A in ("%latest_version:v=%") do (
-            set "major=%%A"
-            set "minor=%%B"
-            set "patch=%%C"
-          )
-          if "%patch%"=="" set patch=0
-          set /a new_patch=%patch% + 1
-          set "new_version=v%major%.%minor%.%new_patch%"
-          echo New version: %new_version%
-          echo new_version=%new_version% >> %GITHUB_ENV%
+          pip install nuitka
+          pip install -r requirements.txt
 
-      - name: Install dependencies
-        shell: cmd
-        run: |
-          python -m pip install -r requirements.txt
-          python -m pip install nuitka
-
-      - name: Build project
-        shell: cmd
+      - name: Build with PyInstaller
         run: |
           echo Building project with Nuitka...
           python -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist main.py
 
-      - name: Create a new release
-        shell: cmd
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo Creating a new release...
-          curl -X POST -H "Authorization: token %GITHUB_TOKEN%" ^
-          -d "{\"tag_name\": \"%new_version%\", \"target_commitish\": \"main\", \"name\": \"%new_version%\", \"body\": \"Automated release %new_version%\", \"draft\": false, \"prerelease\": false}" ^
-          https://api.github.com/repos/%GITHUB_REPOSITORY%/releases
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          release_name: ${{ steps.vars.outputs.release_name }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: .\dist\main.exe
+          asset_name: main.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload README as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: .\README.MD
+          asset_name: README.MD
+          asset_content_type: text/markdown
+
+  build-and-release-linux:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+          with:
+            fetch-depth: 0
+
+        - name: 设置环境变量
+          id: vars
+          run: |
+            echo "::set-output name=tag::Linux$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
+            echo "::set-output name=release_name::LinuxRelease $(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
+
+        - name: Set up Python
+          uses: actions/setup-python@v2
+          with:
+            python-version: '3.10'
+
+        - name: Install dependences
+          run: |
+            pip install nuitka
+
+        - name: Compile with Nuitka
+            python3 -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist main.py 
+
+        - name: Create Release
+          id: create_release
+          uses: actions/create-release@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            tag_name: ${{ steps.vars.outputs.tag }}
+            release_name: ${{ steps.vars.outputs.release_name }}
+            draft: false
+            prerelease: false
+
+        - name: Upload Release Asset
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
+            asset_path: ./dist/main
+            asset_name: main
+            asset_content_type: application/octet-stream
+
+        - name: Upload README as Release Asset
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
+            asset_path: ./README.MD
+            asset_name: README.MD
+            asset_content_type: text/markdown
