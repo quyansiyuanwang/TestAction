@@ -92,6 +92,7 @@ jobs:
             pip install nuitka
 
         - name: Compile with Nuitka
+          run: |
             python3 -m nuitka --standalone --onefile --assume-yes-for-downloads --output-dir=dist main.py 
 
         - name: Create Release
