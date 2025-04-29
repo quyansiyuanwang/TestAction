@@ -12,87 +12,45 @@ jobs:
 
       - name: Get the latest release
         id: get_latest_release
+        shell: cmd
         run: |
-          echo "Fetching latest release from the GitHub API..."
-          latest_release=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r '.tag_name, .target_commitish')
-          if ([ "$latest_release" == "null" ]); then
-            echo "No previous release found. Defaulting to v1.0.0."
-            echo "version=v1.0.0" >> $GITHUB_ENV
-            echo "last_commit=" >> $GITHUB_ENV
-          else
-            tag_name=$(echo "$latest_release" | head -n 1)
-            target_commit=$(echo "$latest_release" | tail -n 1)
-            echo "Latest tag: $tag_name"
-            echo "Last commit hash: $target_commit"
-            echo "version=$tag_name" >> $GITHUB_ENV
-            echo "last_commit=$target_commit" >> $GITHUB_ENV
-          fi
+          echo Fetching latest release from the GitHub API...
+          for /f "tokens=1,2 delims=," %%A in ('curl -s "https://api.github.com/repos/%GITHUB_REPOSITORY%/releases/latest" ^| jq -r ".tag_name, .target_commitish"') do (
+            set "latest_release=%%A"
+            set "target_commit=%%B"
+          )
+          if "%latest_release%"=="" (
+            echo No previous release found. Defaulting to v1.0.0.
+            echo version=v1.0.0 >> %GITHUB_ENV%
+            echo last_commit= >> %GITHUB_ENV%
+          ) else (
+            echo Latest tag: %latest_release%
+            echo Last commit hash: %target_commit%
+            echo version=%latest_release% >> %GITHUB_ENV%
+            echo last_commit=%target_commit% >> %GITHUB_ENV%
+          )
 
       - name: Increment version
         id: increment_version
+        shell: cmd
         run: |
-          echo "Incrementing version..."
-          latest_version=${{ env.version }}
-          version_number=$(echo $latest_version | sed 's/v//') # 去掉 'v'
-          major=$(echo $version_number | cut -d. -f1)
-          minor=$(echo $version_number | cut -d. -f2)
-          patch=$(echo $version_number | cut -d. -f3)
-          if [ -z "$patch" ]; then
-            patch=0
-          fi
-          new_patch=$((patch + 1))
-          new_version="v${major}.${minor}.${new_patch}"
-          echo "New version: $new_version"
-          echo "new_version=$new_version" >> $GITHUB_ENV
+          echo Incrementing version...
+          set "latest_version=%version%"
+          for /f "tokens=1,2,3 delims=." %%A in ("%latest_version:v=%") do (
+            set "major=%%A"
+            set "minor=%%B"
+            set "patch=%%C"
+          )
+          if "%patch%"=="" set patch=0
+          set /a new_patch=%patch% + 1
+          set "new_version=v%major%.%minor%.%new_patch%"
+          echo New version: %new_version%
+          echo new_version=%new_version% >> %GITHUB_ENV%
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install nuitka
-
-      - name: Generate changelog
-        id: generate_changelog
-        run: |
-          if [ -z "${{ env.last_commit }}" ]; then
-            echo "No previous commit found. Skipping changelog generation."
-            echo "changelog=" >> $GITHUB_ENV
-          else
-            changelog=$(python tools/changelog.py "https://github.com/${{ github.repository }}/commit/${{ env.last_commit }}")
-            echo "Changelog generated: $changelog"
-            echo "changelog=$changelog" >> $GITHUB_ENV
-          fi
-
-      - name: Packaging with Nuitka
-        run: |
-          nuitka --onefile main.py --output-dir=dist --output-filename=dist/DoroTablePet.exe
-
-      - name: Verify executable
-        run: |
-          if not exist dist\DoroTablePet.exe (
-            echo "Error: Executable not found!" && exit 1
-          )
         shell: cmd
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install nuitka
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ env.new_version }}
-          release_name: "Version ${{ env.new_version }}"
-          body: |
-            Version ${{ env.new_version }}
-
-            Changelog:
-            ${{ env.changelog }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/DoroTablePet.exe
-          asset_name: DoroTablePet.exe
-          asset_content_type: application/octet-stream
+      - name:
