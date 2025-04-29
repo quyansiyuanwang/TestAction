@@ -15,7 +15,7 @@ jobs:
         run: |
           echo "Fetching latest release from the GitHub API..."
           latest_release=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r '.tag_name, .target_commitish')
-          if [ "$latest_release" == "null" ]; then
+          if ([ "$latest_release" == "null" ]); then
             echo "No previous release found. Defaulting to v1.0.0."
             echo "version=v1.0.0" >> $GITHUB_ENV
             echo "last_commit=" >> $GITHUB_ENV
