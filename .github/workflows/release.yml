@@ -53,4 +53,18 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install nuitka
 
-      - name:
+      - name: Build project
+        shell: cmd
+        run: |
+          echo Building project with Nuitka...
+          python -m nuitka --standalone --onefile --output-dir=dist main.py
+
+      - name: Create a new release
+        shell: cmd
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo Creating a new release...
+          curl -X POST -H "Authorization: token %GITHUB_TOKEN%" ^
+          -d "{\"tag_name\": \"%new_version%\", \"target_commitish\": \"main\", \"name\": \"%new_version%\", \"body\": \"Automated release %new_version%\", \"draft\": false, \"prerelease\": false}" ^
+          https://api.github.com/repos/%GITHUB_REPOSITORY%/releases
