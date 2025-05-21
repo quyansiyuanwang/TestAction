@@ -31,7 +31,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.run_id }}-${{ github.sha }}
-          release_name: ${{ github.run_id }}-${{ github.sha }}
           body: |
             ## Release Notes
             - This is a release for new version.
