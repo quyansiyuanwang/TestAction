@@ -1,0 +1,52 @@
+name: Publish App Version
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build
+        run: |
+          python -m build
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.run_id }}-${{ github.sha }}
+          release_name: ${{ github.run_id }}-${{ github.sha }}
+          body: |
+            ## Release Notes
+            - This is a release for new version.
+            - The following files are included in this release:
+              - dist/*
+              - resources/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.run_id }}-${{ github.sha }}
+          files: |
+            dist/*
+            resources/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
