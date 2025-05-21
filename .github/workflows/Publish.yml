@@ -39,7 +39,7 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.run_id }}-${{ github.sha }}
+          tag_name: $(date +'%Y%m%d')-${{ github.run_id }}
           body: |
             ## Release Notes
             - This is a release for new version.
