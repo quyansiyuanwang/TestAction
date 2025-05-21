@@ -38,7 +38,7 @@ jobs:
       - name: Calculate Release Version
         id: version
         run: |
-          echo "VERSION=$(python -c 'import re; print(re.search(r'__version__ = \"(.*?)\"', open(\"src/your_module/__init__.py\").read()).group(1))')" >> $GITHUB_OUTPUT
+          echo "VERSION=$(python -c "import re; print(re.search(r'__version__ = \"(.*?)\"', open('src/your_module/__init__.py').read()).group(1)")" >> $GITHUB_OUTPUT
 
       - name: Create Release
         id: create_release
